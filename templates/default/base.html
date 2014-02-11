@@ -12,6 +12,8 @@
       <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
 
+    {% block css_header %}{% endblock %}
+
   </head>
 
   <body>
@@ -44,13 +46,6 @@
         <div class="col-sm-12 blog-main">
 
           {% block content %}{% endblock %}
-
-          {%if not is_single%}
-          <ul class="pager">
-            <li><a href="#">Previous</a></li>
-            <li><a href="#">Next</a></li>
-          </ul>
-          {%endif%}
 
         </div><!-- /.blog-main -->
 

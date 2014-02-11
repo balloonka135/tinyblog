@@ -4,6 +4,7 @@ import datetime
 
 from flask import Flask, url_for, render_template
 from flask.ext.mongoengine import MongoEngine
+from flask.ext.mongoengine.wtf import model_form
 
 app = Flask(__name__)
 app.config["MONGODB_DB"] = "blog"
@@ -73,11 +74,19 @@ def list_view():
     return render_template("%s/posts_list.html" % app.config.get("TEMPLATE_NAME") , posts=posts, pages=pages)
 
 
-@app.route("/<slug>/")
+@app.route("/<int:page>/")
+def list_view_page(page):
+    posts = Post.objects.all()
+    pages = Page.objects.all()
+    return render_template("%s/posts_list.html" % app.config.get("TEMPLATE_NAME") , posts=posts, pages=pages)
+
+
+@app.route("/<slug>/", methods=("GET",))
 def post_detail(slug):
     post = Post.objects.get_or_404(slug=slug)
     pages = Page.objects.all()
-    return render_template("%s/post_detail.html" % app.config.get("TEMPLATE_NAME"), post=post, pages=pages, is_single=True)
+    form = model_form(Comment, exclude=['created_at'])
+    return render_template("%s/post_detail.html" % app.config.get("TEMPLATE_NAME"), post=post, pages=pages, form=form, is_single=True)
 
 
 @app.route("/page/<slug>/")

@@ -3,6 +3,12 @@
 {% block page_header %}
 {% endblock %}
 
+{% block css_header %}
+{% endblock %}
+
+{% block js_footer %}
+{% endblock %}
+
 {% block content %}
     {% for post in posts %}
 
@@ -18,4 +24,14 @@
         {{ post.body|truncate(100) }}
       </div><!-- /.blog-post -->
     {% endfor %}
+
+    <ul class="pager">
+      <li class="previous">
+        <a href="#">&larr; Older</a>
+      </li>
+      <li class="next">
+        <a href="#">Newer &rarr;</a>
+      </li>
+    </ul>
+
 {% endblock %}

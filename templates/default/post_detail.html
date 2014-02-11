@@ -1,4 +1,5 @@
 {% extends "default/base.html" %}
+{% import "default/_forms.html" as forms %}
 
 {% block page_header %}
   <div class="page-header">
@@ -18,7 +19,6 @@
     {{ post.body|truncate(100) }}
   </div><!-- /.blog-post -->
 
-  {%if not is_page%}
   <h2>Comments</h2>
     {% if post.comments %}
       {% for comment in post.comments %}
@@ -27,5 +27,14 @@
         {{ comment.text }}
       {% endfor %}
     {% endif %}
-  {% endif %}
+
+  <hr>
+  <h2>Add a comment</h2>
+  <form action="." method="post">
+    {{ forms.render(form) }}
+    <div class="actions">
+      <input type="submit" class="btn primary" value="comment">
+    </div>
+  </form>
+
 {% endblock %}
