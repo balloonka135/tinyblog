@@ -1,14 +1,21 @@
 {% extends "default/base.html" %}
 
+{% block page_header %}
+{% endblock %}
+
 {% block content %}
     {% for post in posts %}
-      <h2><a href="{{ url_for('post_detail', slug=post.slug) }}">{{ post.title }}</a></h2>
-      <p>{{ post.body|truncate(100) }}</p>
-      <p>
-        {{ post.created_at.strftime('%H:%M %Y-%m-%d') }} |
+
+
+      <div class="blog-post">
+        <h2 class="blog-post-title"><a href="{{ url_for('post_detail', slug=post.slug) }}">{{ post.title }}</a></h2>
+        <p class="blog-post-meta">{{ post.created_at.strftime('%H:%M %Y-%m-%d') }} | by <a href="#">Chris</a> |
         {% with total=post.comments|length %}
             {{ total }} comment {%- if total > 1 %}s{%- endif -%}
         {% endwith %}
-      </p>
+        </p>
+
+        {{ post.body|truncate(100) }}
+      </div><!-- /.blog-post -->
     {% endfor %}
 {% endblock %}

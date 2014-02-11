@@ -2,26 +2,20 @@
 
 {% block page_header %}
   <div class="page-header">
-    <h1>{{ post.title }}</h1>
+    <h1>{{ page.title }}</h1>
   </div>
 {% endblock %}
 
 {% block content %}
 
   <div class="blog-post">
-    <p class="blog-post-meta">{{ post.created_at.strftime('%H:%M %Y-%m-%d') }} | by <a href="#">Chris</a> |
-    {% with total=post.comments|length %}
-        {{ total }} comment {%- if total > 1 %}s{%- endif -%}
-    {% endwith %}
-    </p>
-
-    {{ post.body|truncate(100) }}
+    {{ page.body|truncate(100) }}
   </div><!-- /.blog-post -->
 
   {%if not is_page%}
   <h2>Comments</h2>
-    {% if post.comments %}
-      {% for comment in post.comments %}
+    {% if page.comments %}
+      {% for comment in page.comments %}
          <p>{{ comment.body }}</p>
          <p>by <strong>{{ comment.author }}</strong> <small>on {{ comment.created_at.strftime('%H:%M %Y-%m-%d') }}</small></p>
         {{ comment.text }}

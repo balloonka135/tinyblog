@@ -27,10 +27,29 @@ class Post(db.Document):
     comments = db.ListField(db.EmbeddedDocumentField('Comment'))
 
     def get_absolute_url(self):
-        return url_for('post', kwargs={"slug": self.slug})
+        return url_for('post_detail', kwargs={"slug": self.slug})
 
     def __unicode__(self):
-        return self.title
+        return self.slug
+
+    meta = {
+        'allow_inheritance': True,
+        'indexes': ['-created_at', 'slug'],
+        'ordering': ['-created_at']
+    }
+
+
+class Page(db.Document):
+    created_at = db.DateTimeField(default=datetime.datetime.now, required=True)
+    title = db.StringField(max_length=255, required=True)
+    slug = db.StringField(max_length=255, required=True)
+    body = db.StringField(required=True)
+
+    def get_absolute_url(self):
+        return url_for('page', kwargs={"slug": self.slug})
+
+    def __unicode__(self):
+        return self.slug
 
     meta = {
         'allow_inheritance': True,
@@ -50,13 +69,22 @@ class Comment(db.EmbeddedDocument):
 @app.route("/")
 def list_view():
     posts = Post.objects.all()
-    return render_template("%s/posts_list.html" % app.config.get("TEMPLATE_NAME") , posts=posts)
+    pages = Page.objects.all()
+    return render_template("%s/posts_list.html" % app.config.get("TEMPLATE_NAME") , posts=posts, pages=pages)
 
 
 @app.route("/<slug>/")
 def post_detail(slug):
     post = Post.objects.get_or_404(slug=slug)
-    return render_template("%s/post_detail.html" % app.config.get("TEMPLATE_NAME"), post=post)
+    pages = Page.objects.all()
+    return render_template("%s/post_detail.html" % app.config.get("TEMPLATE_NAME"), post=post, pages=pages, is_single=True)
+
+
+@app.route("/page/<slug>/")
+def page_detail(slug):
+    page = Page.objects.get_or_404(slug=slug)
+    pages = Page.objects.all()
+    return render_template("%s/page_detail.html" % app.config.get("TEMPLATE_NAME"), page=page, pages=pages, is_single=True, is_page=True)
 
 
 if __name__ == '__main__':
