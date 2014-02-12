@@ -16,7 +16,21 @@
     {% endwith %}
     </p>
 
-    {{ post.body|truncate(100) }}
+    {% if post.body %}
+      {% if post.post_type == 'Quote' %}
+        <blockquote>{{ post.body }}</blockquote>
+        <p>{{ post.author }}</p>
+      {% else %}
+        <p>{{ post.body }}</p>
+      {% endif %}
+    {% endif %}
+    {% if post.embed_code %}
+      {{ post.embed_code|safe() }}
+    {% endif %}
+    {% if post.image_url %}
+      <p><img src="{{ post.image_url }}" /><p>
+    {% endif %}
+
   </div><!-- /.blog-post -->
 
   <h2>Comments</h2>
@@ -30,7 +44,7 @@
 
   <hr>
   <h2>Add a comment</h2>
-  <form action="." method="post">
+  <form action="{{url_for('save_post', slug=post.slug)}}" method="post">
     {{ forms.render(form) }}
     <div class="actions">
       <input type="submit" class="btn primary" value="comment">

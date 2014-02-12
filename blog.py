@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import datetime
 
-from flask import Flask, url_for, render_template
+from flask import Flask, url_for, render_template, request, redirect
 from flask.ext.mongoengine import MongoEngine
 from flask.ext.mongoengine.wtf import model_form
 
@@ -59,6 +59,23 @@ class Page(db.Document):
     }
 
 
+class BlogPost(Post):
+    body = db.StringField(required=True)
+
+
+class Video(Post):
+    embed_code = db.StringField(required=True)
+
+
+class Image(Post):
+    image_url = db.StringField(required=True, max_length=255)
+
+
+class Quote(Post):
+    body = db.StringField(required=True)
+    author = db.StringField(verbose_name="Author Name", required=True, max_length=255)
+
+
 class Comment(db.EmbeddedDocument):
     created_at = db.DateTimeField(default=datetime.datetime.now, required=True)
     body = db.StringField(verbose_name="Comment", required=True)
@@ -66,6 +83,8 @@ class Comment(db.EmbeddedDocument):
 
 
 #================================================ VIEWS
+
+make_form = model_form(Comment, exclude=['created_at'])
 
 @app.route("/")
 def list_view():
@@ -85,9 +104,26 @@ def list_view_page(page):
 def post_detail(slug):
     post = Post.objects.get_or_404(slug=slug)
     pages = Page.objects.all()
-    form = model_form(Comment, exclude=['created_at'])
+    form = make_form(request.form)
     return render_template("%s/post_detail.html" % app.config.get("TEMPLATE_NAME"), post=post, pages=pages, form=form, is_single=True)
 
+
+@app.route('/<slug>/', methods=("POST",))
+def save_post(slug):
+    post = Post.objects.get_or_404(slug=slug)
+    form = make_form(request.form)
+
+    if form.validate():
+        comment = Comment()
+        form.populate_obj(comment)
+
+        post.comments.append(comment)
+        post.save()
+
+        return redirect(url_for('post_detail', slug=slug))
+
+    pages = Page.objects.all()
+    return render_template("%s/post_detail.html" % app.config.get("TEMPLATE_NAME"), post=post, pages=pages, form=form, is_single=True)
 
 @app.route("/page/<slug>/")
 def page_detail(slug):
