@@ -5,6 +5,7 @@ import datetime
 from flask import Flask, url_for, render_template, request, redirect
 from flask.ext.mongoengine import MongoEngine
 from flask.ext.mongoengine.wtf import model_form
+from flask.ext.superadmin import Admin, model
 
 app = Flask(__name__)
 app.config["MONGODB_DB"] = "blog"
@@ -19,19 +20,23 @@ app.config["TEMPLATE_NAME"] = "default"
 
 db = MongoEngine(app)
 
+admin = Admin(app, name="TinyBlog")
+
 #================================================ MODELS
-class Post(db.Document):
+class Page(db.Document):
     created_at = db.DateTimeField(default=datetime.datetime.now, required=True)
     title = db.StringField(max_length=255, required=True)
     slug = db.StringField(max_length=255, required=True)
-    body = db.StringField(required=True)
-    comments = db.ListField(db.EmbeddedDocumentField('Comment'))
 
     def get_absolute_url(self):
-        return url_for('post_detail', kwargs={"slug": self.slug})
+        return url_for('page', kwargs={"slug": self.slug})
 
     def __unicode__(self):
         return self.slug
+
+    @property
+    def post_type(self):
+        return self.__class__.__name__
 
     meta = {
         'allow_inheritance': True,
@@ -40,14 +45,14 @@ class Post(db.Document):
     }
 
 
-class Page(db.Document):
+class Post(db.Document):
     created_at = db.DateTimeField(default=datetime.datetime.now, required=True)
     title = db.StringField(max_length=255, required=True)
     slug = db.StringField(max_length=255, required=True)
-    body = db.StringField(required=True)
+    comments = db.ListField(db.EmbeddedDocumentField('Comment'))
 
     def get_absolute_url(self):
-        return url_for('page', kwargs={"slug": self.slug})
+        return url_for('post_detail', kwargs={"slug": self.slug})
 
     def __unicode__(self):
         return self.slug
@@ -81,6 +86,17 @@ class Comment(db.EmbeddedDocument):
     body = db.StringField(verbose_name="Comment", required=True)
     author = db.StringField(verbose_name="Name", max_length=255, required=True)
 
+
+#================================================ ADMIN VIEWS
+
+class PostModel(model.ModelAdmin):
+    # fields = ("title","slug","body")
+    list_display = ('title','created_at')
+    # only = ('username',)
+    exclude = ('created_at',)
+    search_fields = ('title', 'created_at')
+
+admin.register(BlogPost, PostModel)
 
 #================================================ VIEWS
 
