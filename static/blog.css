@@ -2,8 +2,14 @@
  * Globals
  */
 
-body {
-  font-family: Georgia, "Times New Roman", Times, serif;
+@font-face {
+  font-family: Cabin;
+  src: url('fonts/cabin/Cabin-Regular.otf'); /* Edit this line */
+}
+
+
+body, p, div, span {
+  font-family: Cabin, Georgia, "Times New Roman", Times, serif;
   color: #555;
 }
 
@@ -13,7 +19,7 @@ h3, .h3,
 h4, .h4,
 h5, .h5,
 h6, .h6 {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;;
+  font-family: Cabin, "Helvetica Neue", Helvetica, Arial, sans-serif;;
   font-weight: normal;
   color: #333;
   margin-top: 0;
@@ -264,12 +270,15 @@ blockquote:before {
     font-size: 400%;
     color: #999;
 }
-
 blockquote {
   box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.5);
   border-left: 0.5em solid #DDD;
   font-size: 1em;
   line-height: 1.5;
 }
-
-
+.imagep {
+  text-align: center;
+}
+.post-video .video{
+    text-align: center;
+}

@@ -13,7 +13,7 @@
     {% for post in posts %}
 
 
-      <div class="blog-post">
+      <div class="blog-post {%if post.embed_code%}post-video{%elif post.image%}post-image{%elif post.author%}post-quote{%else%}post-text{%endif%}">
         <h2 class="blog-post-title"><a href="{{ url_for('post_detail', slug=post.slug) }}">{{ post.title }}</a></h2>
         <p class="blog-post-meta">{{ post.created_at.strftime('%H:%M %Y-%m-%d') }} |
         {% with total=post.comments|length %}
@@ -28,14 +28,16 @@
               <footer>{{ post.author }}</footer>
             </blockquote>
           {% else %}
-            <p>{{ post.body|truncate(100) }}</p>
+            <p>{{ post.body|truncate(250) }}</p>
           {% endif %}
         {% endif %}
         {% if post.embed_code %}
-          {{ post.embed_code|safe() }}
+          <div class="video">
+            {{ post.embed_code|safe() }}
+          </div>
         {% endif %}
         {% if post.image %}
-          <p><img src="{{ url_for('image_view',slug=post.slug) }}" /><p>
+          <p class="imagep"><img src="{{ url_for('image_view',slug=post.slug) }}" /><p>
         {% endif %}
 
       </div><!-- /.blog-post -->
