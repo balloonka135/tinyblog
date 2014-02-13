@@ -10,16 +10,18 @@
 {% block content %}
 
   <div class="blog-post">
-    <p class="blog-post-meta">{{ post.created_at.strftime('%H:%M %Y-%m-%d') }} | by <a href="#">Chris</a> |
+    <p class="blog-post-meta">{{ post.created_at.strftime('%H:%M %Y-%m-%d') }} |
     {% with total=post.comments|length %}
         {{ total }} comment {%- if total > 1 %}s{%- endif -%}
     {% endwith %}
     </p>
 
     {% if post.body %}
-      {% if post.post_type == 'Quote' %}
-        <blockquote>{{ post.body }}</blockquote>
-        <p>{{ post.author }}</p>
+      {% if post.author %}
+            <blockquote class="quote">
+              {{ post.body }}
+              <footer>{{ post.author }}</footer>
+            </blockquote>
       {% else %}
         <p>{{ post.body }}</p>
       {% endif %}

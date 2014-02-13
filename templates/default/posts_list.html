@@ -15,16 +15,18 @@
 
       <div class="blog-post">
         <h2 class="blog-post-title"><a href="{{ url_for('post_detail', slug=post.slug) }}">{{ post.title }}</a></h2>
-        <p class="blog-post-meta">{{ post.created_at.strftime('%H:%M %Y-%m-%d') }} | by <a href="#">Chris</a> |
+        <p class="blog-post-meta">{{ post.created_at.strftime('%H:%M %Y-%m-%d') }} |
         {% with total=post.comments|length %}
             {{ total }} comment {%- if total > 1 %}s{%- endif -%}
         {% endwith %}
         </p>
 
         {% if post.body %}
-          {% if post.post_type == 'Quote' %}
-            <blockquote>{{ post.body|truncate(100) }}</blockquote>
-            <p>{{ post.author }}</p>
+          {% if post.author %}
+            <blockquote class="quote">
+              {{ post.body }}
+              <footer>{{ post.author }}</footer>
+            </blockquote>
           {% else %}
             <p>{{ post.body|truncate(100) }}</p>
           {% endif %}
