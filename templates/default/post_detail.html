@@ -27,21 +27,22 @@
     {% if post.embed_code %}
       {{ post.embed_code|safe() }}
     {% endif %}
-    {% if post.image_url %}
-      <p><img src="{{ post.image_url }}" /><p>
+    {% if post.image %}
+      <p><img src="{{ url_for('image_view',slug=post.slug) }}" /><p>
     {% endif %}
 
   </div><!-- /.blog-post -->
 
+  {% if post.comments %}
   <h2>Comments</h2>
-    {% if post.comments %}
-      {% for comment in post.comments %}
-         <p>{{ comment.body }}</p>
-         <p>by <strong>{{ comment.author }}</strong> <small>on {{ comment.created_at.strftime('%H:%M %Y-%m-%d') }}</small></p>
-        {{ comment.text }}
-      {% endfor %}
-    {% endif %}
+    {% for comment in post.comments %}
+       <p>{{ comment.body }}</p>
+       <p>by <strong>{{ comment.author }}</strong> <small>on {{ comment.created_at.strftime('%H:%M %Y-%m-%d') }}</small></p>
+      {{ comment.text }}
+    {% endfor %}
+  {% endif %}
 
+  {%if post.enable_comments%}
   <hr>
   <h2>Add a comment</h2>
   <form action="{{url_for('save_post', slug=post.slug)}}" method="post">
@@ -50,5 +51,5 @@
       <input type="submit" class="btn primary" value="comment">
     </div>
   </form>
-
+  {%endif%}
 {% endblock %}

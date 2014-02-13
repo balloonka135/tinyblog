@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import datetime
 
-from flask import Flask, url_for, render_template, request, redirect
+from flask import Flask, url_for, render_template, request, redirect, make_response
 from flask.ext.mongoengine import MongoEngine
 from flask.ext.mongoengine.wtf import model_form
 from flask.ext.superadmin import Admin, model
@@ -23,80 +23,69 @@ db = MongoEngine(app)
 admin = Admin(app, name="TinyBlog")
 
 #================================================ MODELS
-class Page(db.Document):
-    created_at = db.DateTimeField(default=datetime.datetime.now, required=True)
-    title = db.StringField(max_length=255, required=True)
-    slug = db.StringField(max_length=255, required=True)
-
-    def get_absolute_url(self):
-        return url_for('page', kwargs={"slug": self.slug})
-
-    def __unicode__(self):
-        return self.slug
-
-    @property
-    def post_type(self):
-        return self.__class__.__name__
-
-    meta = {
-        'allow_inheritance': True,
-        'indexes': ['-created_at', 'slug'],
-        'ordering': ['-created_at']
-    }
-
-
-class Post(db.Document):
-    created_at = db.DateTimeField(default=datetime.datetime.now, required=True)
-    title = db.StringField(max_length=255, required=True)
-    slug = db.StringField(max_length=255, required=True)
-    comments = db.ListField(db.EmbeddedDocumentField('Comment'))
-
-    def get_absolute_url(self):
-        return url_for('post_detail', kwargs={"slug": self.slug})
-
-    def __unicode__(self):
-        return self.slug
-
-    meta = {
-        'allow_inheritance': True,
-        'indexes': ['-created_at', 'slug'],
-        'ordering': ['-created_at']
-    }
-
-
-class BlogPost(Post):
-    body = db.StringField(required=True)
-
-
-class Video(Post):
-    embed_code = db.StringField(required=True)
-
-
-class Image(Post):
-    image_url = db.StringField(required=True, max_length=255)
-
-
-class Quote(Post):
-    body = db.StringField(required=True)
-    author = db.StringField(verbose_name="Author Name", required=True, max_length=255)
-
-
 class Comment(db.EmbeddedDocument):
     created_at = db.DateTimeField(default=datetime.datetime.now, required=True)
     body = db.StringField(verbose_name="Comment", required=True)
     author = db.StringField(verbose_name="Name", max_length=255, required=True)
 
+class Tag(db.Document):
+    name = db.StringField(max_length=10)
+
+    def __unicode__(self):
+        return self.name
+
+class PostBase(db.Document):
+    created_at = db.DateTimeField(default=datetime.datetime.now, required=True)
+    title = db.StringField(max_length=255, required=True)
+    slug = db.StringField(max_length=255, required=True)
+    comments = db.ListField(db.EmbeddedDocumentField(Comment))
+    tags = db.ListField(db.ReferenceField('Tag'))
+    enable_comments = db.BooleanField(default=False)
+
+    def get_absolute_url(self):
+        return url_for('post_detail', slug = self.slug)
+
+    def __unicode__(self):
+        return self.slug
+
+    meta = {
+        'allow_inheritance': True,
+        'indexes': ['-created_at', 'slug'],
+        'ordering': ['-created_at']
+    }
+
+
+class Post(PostBase):
+    body = db.StringField(required=True)
+
+
+class Video(PostBase):
+    embed_code = db.StringField(required=True)
+
+
+class Image(PostBase):
+    image = db.ImageField(thumbnail_size=(100, 100, True))
+
+
+class Quote(PostBase):
+    body = db.StringField(required=True)
+    author = db.StringField(verbose_name="Author Name", required=True, max_length=255)
+
 
 #================================================ ADMIN VIEWS
 
 class PostModel(model.ModelAdmin):
-    # fields = ("title","slug","body")
-    list_display = ('title','created_at')
+    list_display = ('title','created_at', 'get_absolute_url')
     # only = ('username',)
-    exclude = ('created_at',)
+    exclude = ('created_at','meta')
     search_fields = ('title', 'created_at')
 
-admin.register(BlogPost, PostModel)
+
+admin.register(Tag)
+admin.register(Post, PostModel)
+admin.register(Video, PostModel)
+admin.register(Image, PostModel)
+admin.register(Quote, PostModel)
 
 #================================================ VIEWS
 
@@ -104,29 +93,33 @@ make_form = model_form(Comment, exclude=['created_at'])
 
 @app.route("/")
 def list_view():
-    posts = Post.objects.all()
-    pages = Page.objects.all()
-    return render_template("%s/posts_list.html" % app.config.get("TEMPLATE_NAME") , posts=posts, pages=pages)
+    posts = PostBase.objects.all()
+    return render_template("%s/posts_list.html" % app.config.get("TEMPLATE_NAME") , posts=posts)
 
+
+@app.route('/image/<slug>/')
+def image_view(slug):
+    post = Image.objects.get_or_404(slug=slug)
+    response=make_response( post.image.read() )
+    response.headers['Content-Type'] = post.image.content_type
+    return response
 
 @app.route("/<int:page>/")
 def list_view_page(page):
-    posts = Post.objects.all()
-    pages = Page.objects.all()
-    return render_template("%s/posts_list.html" % app.config.get("TEMPLATE_NAME") , posts=posts, pages=pages)
+    posts = PostBase.objects.all()
+    return render_template("%s/posts_list.html" % app.config.get("TEMPLATE_NAME") , posts=posts)
 
 
 @app.route("/<slug>/", methods=("GET",))
 def post_detail(slug):
-    post = Post.objects.get_or_404(slug=slug)
-    pages = Page.objects.all()
+    post = PostBase.objects.get_or_404(slug=slug)
     form = make_form(request.form)
-    return render_template("%s/post_detail.html" % app.config.get("TEMPLATE_NAME"), post=post, pages=pages, form=form, is_single=True)
+    return render_template("%s/post_detail.html" % app.config.get("TEMPLATE_NAME"), post=post, form=form, is_single=True)
 
 
 @app.route('/<slug>/', methods=("POST",))
 def save_post(slug):
-    post = Post.objects.get_or_404(slug=slug)
+    post = PostBase.objects.get_or_404(slug=slug)
     form = make_form(request.form)
 
     if form.validate():
@@ -138,15 +131,7 @@ def save_post(slug):
 
         return redirect(url_for('post_detail', slug=slug))
 
-    pages = Page.objects.all()
-    return render_template("%s/post_detail.html" % app.config.get("TEMPLATE_NAME"), post=post, pages=pages, form=form, is_single=True)
-
-@app.route("/page/<slug>/")
-def page_detail(slug):
-    page = Page.objects.get_or_404(slug=slug)
-    pages = Page.objects.all()
-    return render_template("%s/page_detail.html" % app.config.get("TEMPLATE_NAME"), page=page, pages=pages, is_single=True, is_page=True)
-
+    return render_template("%s/post_detail.html" % app.config.get("TEMPLATE_NAME"), post=post, form=form, is_single=True)
 
 if __name__ == '__main__':
     app.run()
