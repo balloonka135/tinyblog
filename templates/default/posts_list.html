@@ -12,7 +12,7 @@
 {% block content %}
     {% for post in posts %}
 
-
+    <article>
       <div class="blog-post {%if post.embed_code%}post-video{%elif post.image%}post-image{%elif post.author%}post-quote{%else%}post-text{%endif%}">
         <h2 class="blog-post-title"><a href="{{ url_for('post_detail', slug=post.slug) }}">{{ post.title }}</a></h2>
         <p class="blog-post-meta">{{ post.created_at.strftime('%H:%M %Y-%m-%d') }} |
@@ -41,6 +41,7 @@
         {% endif %}
 
       </div><!-- /.blog-post -->
+    </article>
     {% endfor %}
 
     <ul class="pager">

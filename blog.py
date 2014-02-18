@@ -17,6 +17,9 @@ app.config["MONGODB_PORT"] = 10012
 app.config["SECRET_KEY"] = "KeepThisS3cr3th366e"
 
 app.config["TEMPLATE_NAME"] = "default"
+app.config["SITE_TITLE"] = "PythonRS"
+app.config["SITE_SUBTITLE"] = "Programando Python no Rio Grande do Sul"
+app.config["POSTS_PER_PAGE"] = 7
 
 db = MongoEngine(app)
 
