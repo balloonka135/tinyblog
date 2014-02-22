@@ -19,6 +19,7 @@
         {% with total=post.comments|length %}
             {{ total }} comment {%- if total > 1 %}s{%- endif -%}
         {% endwith %}
+        | {%for tag in post.tags%}<a href="/tag/{{tag.name}}">{{tag.name}}</a>{%if not loop.last%},{%endif%}{%else%}-no tags-{%endfor%}
         </p>
 
         {% if post.body %}

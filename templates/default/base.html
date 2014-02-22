@@ -2,8 +2,8 @@
 <html lang="pt">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>TinyBlog</title>
-    <link href='http://fonts.googleapis.com/css?family=Lato:400,700|Sintony:400,700' rel='stylesheet' type='text/css'>
+    <title>{% block title %}TinyBlog{% endblock %}</title>
+    <link href='http://fonts.googleapis.com/css?family=Lato:400,700|Sintony:400,700|Indie+Flower' rel='stylesheet' type='text/css'>
     <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
     <link href="{{url_for('static', filename="blog.css")}}" rel="stylesheet">
@@ -41,7 +41,7 @@
         <div class="blog-header-back">
           <div class="container">
             <div class="blog-header">
-              <img src="/static/logo.png">
+              <a href="/"><img src="/static/logo.png"></a>
             </div>
           </div>
         </div>
@@ -71,6 +71,26 @@
           <p>Blog template built for <a href="http://getbootstrap.com">Bootstrap</a> by <a href="https://twitter.com/mdo">@mdo</a>.</p>
           <p>
             <a href="#">Back to top</a>
+
+            <!-- Start of StatCounter Code for Default Guide -->
+            <script type="text/javascript">
+              var sc_project=8894039;
+              var sc_invisible=0;
+              var sc_security="b02e351d";
+              var scJsHost = (("https:" == document.location.protocol) ?
+                "https://secure." : "http://www.");
+                document.write("<sc"+"ript type='text/javascript' src='"+
+                scJsHost+"statcounter.com/counter/counter.js'></"+"script>");
+            </script>
+            <noscript>
+              <div class="statcounter"><a title="web analytics"
+              href="http://statcounter.com/" target="_blank"><img
+              class="statcounter"
+              src="http://c.statcounter.com/8894039/0/b02e351d/0/"
+              alt="web analytics"></a></div>
+            </noscript>
+            <!-- End of StatCounter Code for Default Guide -->
+
           </p>
         </div>
       </footer>
@@ -81,25 +101,6 @@
     <script src="https://code.jquery.com/jquery-1.10.2.min.js" type="text/javascript"></script>
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js" type="text/javascript"></script>
     {% block js_footer %}{% endblock %}
-
-    <!-- Start of StatCounter Code for Default Guide -->
-    <script type="text/javascript">
-      var sc_project=8894039;
-      var sc_invisible=0;
-      var sc_security="b02e351d";
-      var scJsHost = (("https:" == document.location.protocol) ?
-        "https://secure." : "http://www.");
-        document.write("<sc"+"ript type='text/javascript' src='"+
-        scJsHost+"statcounter.com/counter/counter.js'></"+"script>");
-    </script>
-    <noscript>
-      <div class="statcounter"><a title="web analytics"
-      href="http://statcounter.com/" target="_blank"><img
-      class="statcounter"
-      src="http://c.statcounter.com/8894039/0/b02e351d/0/"
-      alt="web analytics"></a></div>
-    </noscript>
-    <!-- End of StatCounter Code for Default Guide -->
 
   </body>
 </html>

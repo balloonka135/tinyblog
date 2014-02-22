@@ -3,9 +3,14 @@
 import datetime
 import os.path as op
 
-from flask import Flask, url_for, render_template, request, redirect, make_response
+from flask import Flask, url_for, render_template, request, redirect, make_response, abort
 from flask.ext.mongoengine import MongoEngine
-from flask.ext.superadmin import Admin, model
+from flask.ext import admin
+from flask.ext.admin.form import rules
+from flask.ext.admin.contrib.mongoengine import ModelView
+from flask.ext.admin.contrib.fileadmin import FileAdmin
+from wtforms.fields import SelectField
+
 
 app = Flask(__name__)
 app.config["MONGODB_DB"] = "blog"
@@ -23,7 +28,7 @@ app.config["POSTS_PER_PAGE"] = 7
 
 db = MongoEngine(app)
 
-admin = Admin(app, name="TinyBlog")
+admin = admin.Admin(app, 'TinyBlog Admin')
 
 #================================================ MODELS
 class Tag(db.Document):
@@ -70,27 +75,52 @@ class Quote(PostBase):
 
 
 #================================================ ADMIN VIEWS
+class BaseAdminView(ModelView):
+    column_filters = ['title', 'created_at','enable_comments']
+    column_searchable_list = ('title','slug')
+    form_overrides = dict(enable_comments=SelectField)
+    form_args = dict(
+        # Pass the choices to the `SelectField`
+        enable_comments=dict(
+            choices=[(True, u'Sim'), (False, u'Não')]
+        ))
 
-class PostModel(model.ModelAdmin):
-    list_display = ('title','created_at', 'get_absolute_url')
-    # only = ('username',)
-    exclude = ('created_at','meta')
-    search_fields = ('title', 'created_at')
+class PostView(BaseAdminView):
+    column_searchable_list = ('title','slug','body')
 
+class VideoView(BaseAdminView):
+    column_searchable_list = ('title','slug','embed_code')
 
-admin.register(Tag)
-admin.register(Post, PostModel)
-admin.register(Video, PostModel)
-admin.register(Image, PostModel)
-admin.register(Quote, PostModel)
+class ImageView(BaseAdminView):
+    pass
 
+class QuoteView(BaseAdminView):
+    column_searchable_list = ('title','slug','body','author')
+
+admin.add_view(PostView(Post, endpoint="post", category=u'Conteúdo'))
+admin.add_view(VideoView(Video, endpoint="video", category=u'Conteúdo'))
+admin.add_view(ImageView(Image, endpoint="image", category=u'Conteúdo'))
+admin.add_view(QuoteView(Quote, endpoint="quote", category=u'Conteúdo'))
+
+path = op.join(op.dirname(__file__), 'static/uploads')
+admin.add_view(FileAdmin(path, '/static/uploads/', name='Media Files'))
 #================================================ VIEWS
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('%s/404.html'% app.config.get("TEMPLATE_NAME")), 404
 
 @app.route("/")
-def list_view():
+def index():
     posts = PostBase.objects.all()
     return render_template("%s/posts_list.html" % app.config.get("TEMPLATE_NAME") , posts=posts)
 
+@app.route("/tag/<tag>/")
+def list_view_tag(tag):
+    t_search = Tag.objects(name=tag).first()
+    if not t_search:
+        return abort(404)
+    posts = PostBase.objects(tags=t_search)
+    return render_template("%s/posts_list.html" % app.config.get("TEMPLATE_NAME") , posts=posts)
 
 @app.route('/image/<slug>/')
 def image_view(slug):

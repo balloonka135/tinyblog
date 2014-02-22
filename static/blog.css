@@ -4,7 +4,7 @@
 
 
 body, p, div, span {
-  font-family: Lato, Georgia, "Times New Roman", Times, serif;
+  font-family: 'Lato', Georgia, "Times New Roman", Times, serif;
   color: #555;
 }
 
@@ -267,19 +267,14 @@ textarea:focus, input:focus {
   border: 1px solid #09C;
 }
 
-blockquote:before {
-    display: block;
-    height: 0px;
-    content: "“";
-    margin-left: -1em;
-    font-size: 400%;
-    color: #999;
-}
 blockquote {
   box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.5);
   border-left: 0.5em solid #DDD;
   font-size: 1em;
   line-height: 1.5;
+}
+blockquote.quote {
+  font-family: 'Indie Flower', Lato;
 }
 .imagep {
   text-align: center;
