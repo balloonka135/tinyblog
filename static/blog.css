@@ -296,16 +296,16 @@ blockquote.quote {
   padding: 3px;
 }
 
-.twitter{
+.twitter a{
   color: #55ACEE;
 }
-.face{
+.face a{
   color:#3B5998;
 }
-.gplus{
+.gplus a{
   color:#DB4937;
 }
-.linkedin{
+.linkedin a{
   color:#F7D810;
 }
 
