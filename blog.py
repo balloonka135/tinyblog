@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 import datetime
 import os.path as op
+import wtforms
 
 from flask import Flask, url_for, render_template, request, redirect, make_response, abort
 from flask.ext.mongoengine import MongoEngine
-from flask.ext import admin
+from flask.ext import admin, wtf
 from flask.ext.admin.form import rules
 from flask.ext.admin.contrib.mongoengine import ModelView
 from flask.ext.admin.contrib.fileadmin import FileAdmin
-from wtforms.fields import SelectField
 
 
 app = Flask(__name__)
@@ -75,18 +75,32 @@ class Quote(PostBase):
 
 
 #================================================ ADMIN VIEWS
+class CKTextAreaWidget(wtforms.widgets.TextArea):
+    def __call__(self, field, **kwargs):
+        kwargs.setdefault('class_', 'ckeditor')
+        return super(CKTextAreaWidget, self).__call__(field, **kwargs)
+
+
+class CKTextAreaField(wtforms.fields.TextAreaField):
+    widget = CKTextAreaWidget()
+
+
 class BaseAdminView(ModelView):
     column_filters = ['title', 'created_at','enable_comments']
     column_searchable_list = ('title','slug')
-    form_overrides = dict(enable_comments=SelectField)
-    form_args = dict(
-        # Pass the choices to the `SelectField`
-        enable_comments=dict(
-            choices=[(True, u'Sim'), (False, u'Não')]
-        ))
+    # form_overrides = dict(enable_comments=wtforms.fields.SelectField)
+    # form_args = dict(
+    #     enable_comments=dict(
+    #         choices=[(True, True), (False, False)]
+    #     ))
 
 class PostView(BaseAdminView):
     column_searchable_list = ('title','slug','body')
+    form_create_rules = ('title', 'body', 'slug', 'tags', 'created_at', 'enable_comments')
+    form_overrides = dict( body=CKTextAreaField)
+    # form_overrides = dict(enable_comments=wtforms.fields.SelectField, body=CKTextAreaField)
+    create_template = 'admin/edit.html'
+    edit_template = 'admin/edit.html'
 
 class VideoView(BaseAdminView):
     column_searchable_list = ('title','slug','embed_code')
@@ -104,6 +118,7 @@ admin.add_view(QuoteView(Quote, endpoint="quote", category=u'Conteúdo'))
 
 path = op.join(op.dirname(__file__), 'static/uploads')
 admin.add_view(FileAdmin(path, '/static/uploads/', name='Media Files'))
+
 #================================================ VIEWS
 @app.errorhandler(404)
 def page_not_found(e):

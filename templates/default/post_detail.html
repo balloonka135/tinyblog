@@ -1,15 +1,12 @@
 {% extends "default/base.html" %}
 {% import "default/_forms.html" as forms %}
 
-{% block page_header %}
-  <div class="page-header">
-    <h1>{{ post.title }}</h1>
-  </div>
-{% endblock %}
 
 {% block content %}
 
+<article class="effect6">
   <div class="blog-post {%if post.embed_code%}post-video{%elif post.image%}post-image{%elif post.author%}post-quote{%else%}post-text{%endif%}">
+    <h2 class="blog-post-title"><a href="{{ url_for('post_detail', slug=post.slug) }}">{{ post.title }}</a></h2>
     <p class="blog-post-meta">{{ post.created_at.strftime('%H:%M %Y-%m-%d') }} |
     {% with total=post.comments|length %}
         {{ total }} comment {%- if total > 1 %}s{%- endif -%}
@@ -23,7 +20,7 @@
               <footer>{{ post.author }}</footer>
             </blockquote>
       {% else %}
-        <p>{{ post.body }}</p>
+        <p>{{ post.body|safe() }}</p>
       {% endif %}
     {% endif %}
     {% if post.embed_code %}
@@ -36,6 +33,7 @@
     {% endif %}
 
   </div><!-- /.blog-post -->
+</article>
 
   {% if post.comments %}
   <h2>Comments</h2>
