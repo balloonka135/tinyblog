@@ -122,12 +122,12 @@ admin.add_view(FileAdmin(path, '/static/uploads/', name='Media Files'))
 #================================================ VIEWS
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template('%s/404.html'% app.config.get("TEMPLATE_NAME")), 404
+    return render_template('404.html'), 404
 
 @app.route("/")
 def index():
     posts = PostBase.objects.all()
-    return render_template("%s/posts_list.html" % app.config.get("TEMPLATE_NAME") , posts=posts)
+    return render_template("posts_list.html" , posts=posts)
 
 @app.route("/tag/<tag>/")
 def list_view_tag(tag):
@@ -135,7 +135,7 @@ def list_view_tag(tag):
     if not t_search:
         return abort(404)
     posts = PostBase.objects(tags=t_search)
-    return render_template("%s/posts_list.html" % app.config.get("TEMPLATE_NAME") , posts=posts)
+    return render_template("posts_list.html", posts=posts)
 
 @app.route('/image/<slug>/')
 def image_view(slug):
@@ -147,13 +147,13 @@ def image_view(slug):
 @app.route("/<int:page>/")
 def list_view_page(page):
     posts = PostBase.objects.all()
-    return render_template("%s/posts_list.html" % app.config.get("TEMPLATE_NAME") , posts=posts)
+    return render_template("posts_list.html", posts=posts)
 
 
 @app.route("/<slug>/", methods=("GET",))
 def post_detail(slug):
     post = PostBase.objects.get_or_404(slug=slug)
-    return render_template("%s/post_detail.html" % app.config.get("TEMPLATE_NAME"), post=post, is_single=True)
+    return render_template("post_detail.html", post=post, is_single=True)
 
 
 if __name__ == '__main__':
