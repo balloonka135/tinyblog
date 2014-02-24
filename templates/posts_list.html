@@ -26,6 +26,17 @@
 
     <article class="effect6">
       <div class="blog-post {%if post.embed_code%}post-video{%elif post.image%}post-image{%elif post.author%}post-quote{%else%}post-text{%endif%}">
+        <div class="blog-post-icon">
+          {%if post.embed_code%}
+            <i class="fa fa-video-camera fa-2x"></i>
+          {%elif post.image%}
+            <i class="fa fa-picture-o fa-2x"></i>
+          {%elif post.author%}
+            <i class="fa fa-quote-left fa-2x"></i>
+          {%elif post.body%}
+            <i class="fa fa-align-left fa-2x"></i>
+          {%endif%}
+        </div>
         <h2 class="blog-post-title"><a href="{{ url_for('post_detail', slug=post.slug) }}">{{ post.title }}</a></h2>
         <p class="blog-post-meta">{{ post.created_at.strftime('%d/%m/%Y %H:%M') }} |
 

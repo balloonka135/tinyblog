@@ -188,6 +188,12 @@ header{
 .blog-post {
   margin-bottom: 60px;
 }
+.blog-post-icon{
+  display: block;
+  float: left;
+  padding-top: 5px;
+  margin-right: 10px;
+}
 .blog-post-title {
   margin-bottom: 5px;
   font-size: 40px;
