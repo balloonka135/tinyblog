@@ -20,6 +20,11 @@ h6, .h6 {
   margin-top: 0;
 }
 
+/*Reset bootstrap PRE style*/
+pre{
+  border: 0px;
+  background-color: transparent;
+}
 
 /*
  * Override Bootstrap's default container.
@@ -99,11 +104,11 @@ header{
 .blog-title {
   margin-top: 30px;
   margin-bottom: 0;
-  font-size: 60px;
+  /*font-size: 60px;*/
   font-weight: normal;
 }
 .blog-description {
-  font-size: 20px;
+  /*font-size: 20px;*/
   color: #999;
 }
 
@@ -113,7 +118,7 @@ header{
  */
 
 .blog-main {
-  font-size: 18px;
+  /*font-size: 18px;*/
   line-height: 1.5;
 }
 
@@ -188,6 +193,9 @@ header{
 .blog-post {
   margin-bottom: 60px;
 }
+.blog-post img{
+  max-width: 100%;
+}
 .blog-post-icon{
   display: block;
   float: left;
@@ -196,12 +204,15 @@ header{
 }
 .blog-post-title {
   margin-bottom: 5px;
-  font-size: 40px;
+  /*font-size: 40px;*/
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .blog-post-meta {
   margin-bottom: 20px;
   color: #999;
-  font-size: 9pt;
+  font-size: 70%;
   background-color: rgba(150,150,150,0.2);
   border: 0.5px dashed #ccc;
   padding: 2px;
@@ -289,30 +300,48 @@ blockquote.quote {
 .imagep {
   text-align: center;
 }
+.imagep img {
+  max-width: 100%;
+}
+
 .post-video .video{
     text-align: center;
 }
 
-.socialshare{
-  color: #000;
-  position: fixed;
-  top: 100px;
-  width: 45px;
-  background-color: rgba(255,255,255,0.1);
-  padding: 3px;
+@media (min-width: 800px) {
+
+  .socialshare{
+    color: #000;
+    position: fixed;
+    top: 100px;
+    width: 45px;
+    background-color: rgba(255,255,255,0.1);
+    padding: 3px;
+  }
+
+  .socialshare span{
+    display:block;
+  }
+
+  .twitter a{
+    color: #55ACEE;
+  }
+  .face a{
+    color:#3B5998;
+  }
+  .gplus a{
+    color:#DB4937;
+  }
+  .linkedin a{
+    color:#F7D810;
+  }
+
 }
 
-.twitter a{
-  color: #55ACEE;
-}
-.face a{
-  color:#3B5998;
-}
-.gplus a{
-  color:#DB4937;
-}
-.linkedin a{
-  color:#F7D810;
+@media (max-width: 800px) {
+  .socialshare {
+    display: none;
+  }
 }
 
 /*==================================================

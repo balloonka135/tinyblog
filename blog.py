@@ -3,32 +3,56 @@
 import datetime
 import os.path as op
 import wtforms
+import os
 
-from flask import Flask, url_for, render_template, request, redirect, make_response, abort
+from flask import Flask, url_for, render_template, request, redirect, make_response, abort, flash, g, session
 from flask.ext.mongoengine import MongoEngine
 from flask.ext import admin, wtf
+from flask.ext.wtf import Form
 from flask.ext.admin.form import rules
 from flask.ext.admin.contrib.mongoengine import ModelView
 from flask.ext.admin.contrib.fileadmin import FileAdmin
+from flask.ext.login import LoginManager, login_user, logout_user, current_user, login_required
+from flask.ext.openid import OpenID
 
+#======================================================== SOME VARIABLES
+ROLE_USER = 0
+ROLE_ADMIN = 1
+basedir = op.dirname(__file__)
+#========================================================
 
 app = Flask(__name__)
+# app.config["MONGODB_DB"] = "blog"
+# app.config["MONGODB_USERNAME"] = "db1"
+# app.config["MONGODB_PASSWORD"] = "db1"
+# app.config["MONGODB_HOST"] = "troup.mongohq.com"
+# app.config["MONGODB_PORT"] = 10012
+
 app.config["MONGODB_DB"] = "blog"
 app.config["MONGODB_USERNAME"] = "db1"
 app.config["MONGODB_PASSWORD"] = "db1"
-app.config["MONGODB_HOST"] = "troup.mongohq.com"
-app.config["MONGODB_PORT"] = 10012
+app.config["MONGODB_HOST"] = "10.0.33.34"
+# app.config["MONGODB_PORT"] = 10012
 
 app.config["SECRET_KEY"] = "KeepThisS3cr3th366e"
 
-app.config["TEMPLATE_NAME"] = "default"
 app.config["SITE_TITLE"] = "PythonRS"
 app.config["SITE_SUBTITLE"] = "Programando Python no Rio Grande do Sul"
 app.config["POSTS_PER_PAGE"] = 7
+app.config["OPENID_PROVIDERS"] = [
+    { 'name': 'Google', 'url': 'https://www.google.com/accounts/o8/id' },
+    { 'name': 'Yahoo', 'url': 'https://me.yahoo.com' },
+    { 'name': 'AOL', 'url': 'http://openid.aol.com/<username>' },
+    { 'name': 'Flickr', 'url': 'http://www.flickr.com/<username>' },
+    { 'name': 'MyOpenID', 'url': 'https://www.myopenid.com' }]
 
 db = MongoEngine(app)
 
 admin = admin.Admin(app, 'TinyBlog Admin')
+
+lm = LoginManager()
+lm.init_app(app)
+oid = OpenID(app, os.path.join(basedir, 'tmp'))
 
 #================================================ MODELS
 class Tag(db.Document):
@@ -72,6 +96,28 @@ class Image(PostBase):
 class Quote(PostBase):
     body = db.StringField(required=True)
     author = db.StringField(verbose_name="Author Name", required=True, max_length=255)
+
+
+class User(db.Document):
+    nickname = db.StringField(max_length=64, unique = True, required = True)
+    email = db.StringField(max_length=120, unique = True)
+    role = db.IntField(default = ROLE_USER)
+    posts = db.ListField(db.ReferenceField(Post))
+
+    def is_authenticated(self):
+        return True
+
+    def is_active(self):
+        return True
+
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        return unicode(self.id)
+
+    def __repr__(self):
+        return '<User %r>' % (self.nickname)
 
 
 #================================================ ADMIN VIEWS
@@ -119,15 +165,72 @@ admin.add_view(QuoteView(Quote, endpoint="quote", category=u'Conteúdo'))
 path = op.join(op.dirname(__file__), 'static/uploads')
 admin.add_view(FileAdmin(path, '/static/uploads/', name='Media Files'))
 
+#================================================ LOGINS
+class LoginForm(Form):
+    openid = wtforms.fields.TextField('openid', validators = [wtforms.validators.Required()])
+    remember_me = wtforms.fields.BooleanField('remember_me', default = False)
+
+@lm.user_loader
+def load_user(id):
+    return User.objects.get(id)
+
+@app.before_request
+def before_request():
+    g.user = current_user
+
+
+@app.route('/login', methods = ['GET', 'POST'])
+@oid.loginhandler
+def login():
+    if g.user is not None and g.user.is_authenticated():
+        return redirect(url_for('index'))
+    form = LoginForm()
+    if form.validate_on_submit():
+        session['remember_me'] = form.remember_me.data
+        return oid.try_login(form.openid.data, ask_for = ['nickname', 'email'])
+    return render_template('login.html',
+        title = 'Sign In',
+        form = form,
+        providers = app.config['OPENID_PROVIDERS'])
+
+
+@oid.after_login
+def after_login(resp):
+    if resp.email is None or resp.email == "":
+        flash('Invalid login. Please try again.')
+        return redirect(url_for('login'))
+    user = User.query.filter_by(email = resp.email).first()
+    if user is None:
+        nickname = resp.nickname
+        if nickname is None or nickname == "":
+            nickname = resp.email.split('@')[0]
+        user = User(nickname = nickname, email = resp.email, role = ROLE_USER)
+        db.session.add(user)
+        db.session.commit()
+    remember_me = False
+    if 'remember_me' in session:
+        remember_me = session['remember_me']
+        session.pop('remember_me', None)
+    login_user(user, remember = remember_me)
+    return redirect(request.args.get('next') or url_for('index'))
+
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
 #================================================ VIEWS
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
 
+
 @app.route("/")
 def index():
+    user = g.user
     posts = PostBase.objects.all()
-    return render_template("posts_list.html" , posts=posts)
+    return render_template("posts_list.html" , posts=posts, user=user)
+
 
 @app.route("/tag/<tag>/")
 def list_view_tag(tag):
@@ -137,12 +240,14 @@ def list_view_tag(tag):
     posts = PostBase.objects(tags=t_search)
     return render_template("posts_list.html", posts=posts)
 
+
 @app.route('/image/<slug>/')
 def image_view(slug):
     post = Image.objects.get_or_404(slug=slug)
     response=make_response( post.image.read() )
     response.headers['Content-Type'] = post.image.content_type
     return response
+
 
 @app.route("/<int:page>/")
 def list_view_page(page):
