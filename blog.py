@@ -9,11 +9,11 @@ from flask import Flask, url_for, render_template, request, redirect, make_respo
 from flask.ext.mongoengine import MongoEngine
 from flask.ext import admin, wtf
 from flask.ext.wtf import Form
+from flask.ext.admin import helpers, expose
 from flask.ext.admin.form import rules
 from flask.ext.admin.contrib.mongoengine import ModelView
 from flask.ext.admin.contrib.fileadmin import FileAdmin
 from flask.ext.login import LoginManager, login_user, logout_user, current_user, login_required
-from flask.ext.openid import OpenID
 
 #======================================================== SOME VARIABLES
 ROLE_USER = 0
@@ -22,6 +22,8 @@ basedir = op.dirname(__file__)
 #========================================================
 
 app = Flask(__name__)
+
+app.config["DEBUG"] = True
 # app.config["MONGODB_DB"] = "blog"
 # app.config["MONGODB_USERNAME"] = "db1"
 # app.config["MONGODB_PASSWORD"] = "db1"
@@ -39,20 +41,59 @@ app.config["SECRET_KEY"] = "KeepThisS3cr3th366e"
 app.config["SITE_TITLE"] = "PythonRS"
 app.config["SITE_SUBTITLE"] = "Programando Python no Rio Grande do Sul"
 app.config["POSTS_PER_PAGE"] = 7
-app.config["OPENID_PROVIDERS"] = [
-    { 'name': 'Google', 'url': 'https://www.google.com/accounts/o8/id' },
-    { 'name': 'Yahoo', 'url': 'https://me.yahoo.com' },
-    { 'name': 'AOL', 'url': 'http://openid.aol.com/<username>' },
-    { 'name': 'Flickr', 'url': 'http://www.flickr.com/<username>' },
-    { 'name': 'MyOpenID', 'url': 'https://www.myopenid.com' }]
 
 db = MongoEngine(app)
 
-admin = admin.Admin(app, 'TinyBlog Admin')
-
 lm = LoginManager()
 lm.init_app(app)
-oid = OpenID(app, os.path.join(basedir, 'tmp'))
+
+# Create customized index view class
+class AuthAdminIndexView(admin.AdminIndexView):
+
+    @expose('/')
+    def index(self):
+        if not current_user.is_authenticated():
+            return redirect(url_for('.login_view'))
+        return super(AuthAdminIndexView, self).index()
+
+
+    @expose('/login', methods = ['GET', 'POST'])
+    def login_view(self):
+
+        form = LoginForm(request.form)
+        if request.method == 'POST' and form.validate():
+            user = form.get_user()
+            login_user(user)
+            return redirect(url_for('index'))
+
+        return render_template('auth_form.html', form=form)
+
+
+    @expose('/register/', methods=('GET', 'POST'))
+    def register_view(self):
+        form = RegistrationForm(request.form)
+        if request.method == 'POST' and form.validate():
+            user = User()
+
+            form.populate_obj(user)
+            user.save()
+
+            login_user(user)
+            return redirect(url_for('index'))
+
+        return render_template('auth_form.html', form=form)
+
+    @expose('/logout')
+    def logout(self):
+        logout_user()
+        return redirect(url_for('index'))
+
+
+    # def is_accessible(self):
+    #     return current_user.is_authenticated()
+
+
+admin = admin.Admin(app, 'TinyBlog Admin', index_view=AuthAdminIndexView(url='/admin', name='Admin Home'))
 
 #================================================ MODELS
 class Tag(db.Document):
@@ -99,9 +140,10 @@ class Quote(PostBase):
 
 
 class User(db.Document):
-    nickname = db.StringField(max_length=64, unique = True, required = True)
+    login = db.StringField(max_length=80, unique=True, required = True)
     email = db.StringField(max_length=120, unique = True)
     role = db.IntField(default = ROLE_USER)
+    password = db.StringField(max_length=64)
     posts = db.ListField(db.ReferenceField(Post))
 
     def is_authenticated(self):
@@ -117,7 +159,7 @@ class User(db.Document):
         return unicode(self.id)
 
     def __repr__(self):
-        return '<User %r>' % (self.nickname)
+        return '<User %r>' % (self.login)
 
 
 #================================================ ADMIN VIEWS
@@ -131,7 +173,13 @@ class CKTextAreaField(wtforms.fields.TextAreaField):
     widget = CKTextAreaWidget()
 
 
-class BaseAdminView(ModelView):
+# Create customized model view class
+class AuthModelView(ModelView):
+    def is_accessible(self):
+        return current_user.is_authenticated()
+
+
+class BaseAdminView(AuthModelView):
     column_filters = ['title', 'created_at','enable_comments']
     column_searchable_list = ('title','slug')
     # form_overrides = dict(enable_comments=wtforms.fields.SelectField)
@@ -148,77 +196,64 @@ class PostView(BaseAdminView):
     create_template = 'admin/edit.html'
     edit_template = 'admin/edit.html'
 
+
 class VideoView(BaseAdminView):
     column_searchable_list = ('title','slug','embed_code')
+
 
 class ImageView(BaseAdminView):
     pass
 
+
 class QuoteView(BaseAdminView):
     column_searchable_list = ('title','slug','body','author')
+
 
 admin.add_view(PostView(Post, endpoint="post", category=u'Conteúdo'))
 admin.add_view(VideoView(Video, endpoint="video", category=u'Conteúdo'))
 admin.add_view(ImageView(Image, endpoint="image", category=u'Conteúdo'))
 admin.add_view(QuoteView(Quote, endpoint="quote", category=u'Conteúdo'))
 
+
 path = op.join(op.dirname(__file__), 'static/uploads')
 admin.add_view(FileAdmin(path, '/static/uploads/', name='Media Files'))
 
 #================================================ LOGINS
+# Define login and registration forms (for flask-login)
 class LoginForm(Form):
-    openid = wtforms.fields.TextField('openid', validators = [wtforms.validators.Required()])
-    remember_me = wtforms.fields.BooleanField('remember_me', default = False)
+    login = wtforms.fields.TextField(validators=[wtforms.validators.required()])
+    password = wtforms.fields.PasswordField(validators=[wtforms.validators.required()])
+
+    def validate_login(self, field):
+        user = self.get_user()
+
+        if user is None:
+            raise wtforms.validators.ValidationError('Invalid user')
+
+        if user.password != self.password.data:
+            raise wtforms.validators.ValidationError('Invalid password')
+
+    def get_user(self):
+        return User.objects(login=self.login.data).first()
+
+class RegistrationForm(Form):
+    login = wtforms.fields.TextField(validators=[wtforms.validators.required()])
+    email = wtforms.fields.TextField()
+    password = wtforms.fields.PasswordField(validators=[wtforms.validators.required()])
+
+    def validate_login(self, field):
+        if User.objects(login=self.login.data):
+            raise wtforms.validators.ValidationError('Duplicate username')
 
 @lm.user_loader
 def load_user(id):
-    return User.objects.get(id)
+    return User.objects.get(id=id)
 
 @app.before_request
 def before_request():
     g.user = current_user
 
 
-@app.route('/login', methods = ['GET', 'POST'])
-@oid.loginhandler
-def login():
-    if g.user is not None and g.user.is_authenticated():
-        return redirect(url_for('index'))
-    form = LoginForm()
-    if form.validate_on_submit():
-        session['remember_me'] = form.remember_me.data
-        return oid.try_login(form.openid.data, ask_for = ['nickname', 'email'])
-    return render_template('login.html',
-        title = 'Sign In',
-        form = form,
-        providers = app.config['OPENID_PROVIDERS'])
-
-
-@oid.after_login
-def after_login(resp):
-    if resp.email is None or resp.email == "":
-        flash('Invalid login. Please try again.')
-        return redirect(url_for('login'))
-    user = User.query.filter_by(email = resp.email).first()
-    if user is None:
-        nickname = resp.nickname
-        if nickname is None or nickname == "":
-            nickname = resp.email.split('@')[0]
-        user = User(nickname = nickname, email = resp.email, role = ROLE_USER)
-        db.session.add(user)
-        db.session.commit()
-    remember_me = False
-    if 'remember_me' in session:
-        remember_me = session['remember_me']
-        session.pop('remember_me', None)
-    login_user(user, remember = remember_me)
-    return redirect(request.args.get('next') or url_for('index'))
-
-
-@app.route('/logout')
-def logout():
-    logout_user()
-    return redirect(url_for('index'))
 #================================================ VIEWS
 @app.errorhandler(404)
 def page_not_found(e):

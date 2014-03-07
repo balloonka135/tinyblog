@@ -13,3 +13,12 @@
 Media Files is the location to upload other files do share in your posts.
 </p>
 {%endblock%}
+
+
+{%block access_control%}
+<ul class="nav pull-right">
+	<li><a href="{{url_for('admin.logout')}}">Logout {{g.user.login}}</a></li>
+	<li><a href="/">Site Home</a></li>
+</ul>
+{%endblock%}
+

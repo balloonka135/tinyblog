@@ -1,0 +1,30 @@
+{% extends 'auth_base.html' %}
+{%block body%}
+    <div class="container">
+
+      <form method="POST" class="form-signin" role="form" action="">
+        {{ form.hidden_tag() if form.hidden_tag }}
+        <h2 class="form-signin-heading">Tinyblog Login</h2>
+
+            {% for f in form if f.type != 'CSRFTokenField' %}
+            <div>
+                {% if f.errors %}
+                    {% for e in f.errors %}
+                    <p class="text-danger">
+                    {{ e }}
+                    </p>
+                    {% endfor %}
+                {% endif %}
+                {{ f(class="form-control",placeholder=f.label.text,required="") }}
+            </div>
+            {% endfor %}
+
+        <label class="checkbox">
+          <input type="checkbox" value="remember-me"> Remember me
+        </label>
+        <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+      </form>
+
+    </div> <!-- /container -->
+
+{%endblock%}
