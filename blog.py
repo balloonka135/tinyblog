@@ -98,7 +98,7 @@ admin = admin.Admin(app, 'TinyBlog Admin', index_view=AuthAdminIndexView(url='/a
 
 #================================================ MODELS
 class Tag(db.Document):
-    name = db.StringField(max_length=10)
+    name = db.StringField(max_length=20)
 
     def __unicode__(self):
         return self.name
@@ -193,7 +193,7 @@ class PostView(BaseAdminView):
     column_searchable_list = ('title','slug','body')
     form_create_rules = ('title', 'body', 'slug', 'tags', 'created_at', 'enable_comments')
     form_overrides = dict( body=CKTextAreaField)
-    # form_overrides = dict(enable_comments=wtforms.fields.SelectField, body=CKTextAreaField)
+    column_list = ('title', 'created_at',"enable_comments","tags")
     create_template = 'admin/edit.html'
     edit_template = 'admin/edit.html'
 
@@ -214,6 +214,7 @@ admin.add_view(PostView(Post, endpoint="post", category=u'Conteúdo'))
 admin.add_view(VideoView(Video, endpoint="video", category=u'Conteúdo'))
 admin.add_view(ImageView(Image, endpoint="image", category=u'Conteúdo'))
 admin.add_view(QuoteView(Quote, endpoint="quote", category=u'Conteúdo'))
+admin.add_view(AuthModelView(Tag, endpoint="tag", category=u'Conteúdo'))
 
 
 path = op.join(op.dirname(__file__), 'static/uploads')
@@ -269,7 +270,7 @@ def index(page=1):
     total = PostBase.objects.count()
     # pages_total = round((float(total)/float(perpage))+.5)
     pages_total = round(total/perpage)
-    posts = PostBase.objects.skip(page*perpage).limit(perpage)
+    posts = PostBase.objects.skip((int(page)-1)*perpage).limit(perpage)
     pagination = Pagination(page=page, total=total, per_page=perpage, css_framework='bootstrap',
         bs_version=3, record_name="Posts")
     return render_template("posts_list.html" , posts=posts, total=total, page=page,
