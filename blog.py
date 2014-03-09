@@ -8,6 +8,7 @@ import os
 from flask import Flask, url_for, render_template, request, redirect, make_response, abort, flash, g, session
 from flask.ext.mongoengine import MongoEngine
 from flask.ext import admin, wtf
+from flask.ext.paginate import Pagination
 from flask.ext.wtf import Form
 from flask.ext.admin import helpers, expose
 from flask.ext.admin.form import rules
@@ -261,10 +262,18 @@ def page_not_found(e):
 
 
 @app.route("/")
-def index():
+@app.route("/page/<int:page>")
+def index(page=1):
     user = g.user
-    posts = PostBase.objects.all()
-    return render_template("posts_list.html" , posts=posts, user=user)
+    perpage = int(app.config["POSTS_PER_PAGE"])
+    total = PostBase.objects.count()
+    # pages_total = round((float(total)/float(perpage))+.5)
+    pages_total = round(total/perpage)
+    posts = PostBase.objects.skip(page*perpage).limit(perpage)
+    pagination = Pagination(page=page, total=total, per_page=perpage, css_framework='bootstrap',
+        bs_version=3, record_name="Posts")
+    return render_template("posts_list.html" , posts=posts, total=total, page=page,
+        pages=int(pages_total), user=user, pagination=pagination)
 
 
 @app.route("/tag/<tag>/")

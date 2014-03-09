@@ -12,30 +12,39 @@ The main libraries used here are:
 ---------------------------------
 
 - Flask
-- Mongoengine
-- WTForms
-- flask-mongoengine
+- Mongoengine (flask-mongoengine)
+- WTForms (flask-wtforms)
 - flask-script
-- flask-wtf
-- flask-superadmin
+- flask-admin
+- flask-login
+- flask-paginate
+- Pillow
 
 Features
 --------
 
 - Text, Image, Video and Quote Post
 - Pages
-- Administration area
-- 1 default theme, more can created easely
-- 1 user only
+- Administration area with login
 
 Instalation
 -----------
 
-Create your virtualenv, and run:
+Create your virtualenv, and install the libs:
 
-    pip install -r requirements.txt
+	$ mkvirtuelenv tinyblog
+    $ pip install -r requirements.txt
 
-    python manage.py runserver
+Create the first user:
+
+	$ python manage.py shell
+	>>> from blog import User, ROLE_ADMIN
+	>>> u = User(login="admin",email="admin@yourdomain.com",role=ROLE_ADMIN,password="<thepassword>")
+	>>> u.save()
+
+Then, run the blog:
+
+    $ python manage.py runserver
 
 LICENCE
 -------
