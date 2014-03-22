@@ -416,3 +416,8 @@ article {
          -o-transform:skew(8deg) rotate(3deg);
             transform:skew(8deg) rotate(3deg);
 }
+
+.video iframe{
+  max-width: 100%;
+  max-height: 100%;
+}

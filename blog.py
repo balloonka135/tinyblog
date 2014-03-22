@@ -25,19 +25,16 @@ basedir = op.dirname(__file__)
 app = Flask(__name__)
 
 app.config["DEBUG"] = True
-# app.config["MONGODB_DB"] = "blog"
-# app.config["MONGODB_USERNAME"] = "db1"
-# app.config["MONGODB_PASSWORD"] = "db1"
-# app.config["MONGODB_HOST"] = "troup.mongohq.com"
-# app.config["MONGODB_PORT"] = 10012
 
-app.config["MONGODB_DB"] = "blog"
-app.config["MONGODB_USERNAME"] = "db1"
-app.config["MONGODB_PASSWORD"] = "db1"
-app.config["MONGODB_HOST"] = "10.0.33.34"
-# app.config["MONGODB_PORT"] = 10012
+app.config["MONGODB_SETTINGS"] = {
+    "DB": os.environ.get("OPENSHIFT_APP_NAME"),
+    "HOST": os.environ.get("OPENSHIFT_MONGODB_DB_URL"),
+    "PORT": int(os.environ.get("OPENSHIFT_MONGODB_DB_PORT")),
+    "USERNAME": os.environ.get("OPENSHIFT_MONGODB_DB_USERNAME"),
+    "PASSWORD": os.environ.get("OPENSHIFT_MONGODB_DB_PASSWORD")
+}
 
-app.config["SECRET_KEY"] = "KeepThisS3cr3th366e"
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
 
 app.config["SITE_TITLE"] = "PythonRS"
 app.config["SITE_SUBTITLE"] = "Programando Python no Rio Grande do Sul"
