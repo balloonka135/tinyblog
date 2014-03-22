@@ -27,6 +27,15 @@ Features
 - Pages
 - Administration area with login
 
+TODO List
+---------
+- Memcached
+- Tags for Face,Twitter,g+
+- A best page footer
+- Search field
+- Configuration page (colors, header image,etc...)
+- RSS Feed
+
 Instalation
 -----------
 
